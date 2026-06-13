@@ -1,0 +1,26 @@
+# Cached Mie/temperature grid files (regenerated on first run)
+df_*.csv
+
+# Output figures
+*.pdf
+*.png
+
+# macOS metadata
+.DS_Store
+
+# Python bytecode
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Jupyter checkpoints
+.ipynb_checkpoints/
+
+# IDEs
+.vscode/
+.idea/
