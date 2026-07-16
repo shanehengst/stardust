@@ -28,7 +28,7 @@ Out of the box, `Stardust_base_code.py` is configured for a **Sun-like (G2V) hos
 | System age | `Age` | 100 Myr |
 | Distance | `dpc` | 10 pc |
 
-The stellar spectrum defaults to a blackbody at `Ts`, optionally replaced/calibrated by a BT-Settl/BT-NextGen photosphere model (`BTGen-5770.txt`).
+The stellar spectrum defaults to a blackbody at `Ts`, optionally replaced/calibrated by a BT-NextGen (AGSS2009) solar-type photosphere model (`BTGen-5770.txt`).
 
 ### Fiducial debris belt
 
@@ -91,13 +91,27 @@ pip install -r requirements.txt
 
 The following files must be present in the working directory before running:
 
-| File | Description |
-|---|---|
-| `BTGen-5770.txt` | BT-Settl stellar photosphere spectrum |
-| `BTNextGen_SolarPhotosphere.txt` | BT-NextGen solar photosphere spectrum |
-| `silicate_d03.lnk` | Silicate optical constants (Draine 2003) |
+| File | Description | Source |
+|---|---|---|
+| `BTGen-5770.txt` | BT-NextGen (AGSS2009) solar-type (Teff = 5770 K) photosphere spectrum | [SVO Theoretical Spectra][svo] |
+| `silicate_d03.lnk` | Astronomical silicate optical constants (Draine 2003) | [optool `lnk_data`][optool] |
+
+[svo]: http://svo2.cab.inta-csic.es/theory/newov2/index.php
+[optool]: https://github.com/cdominik/optool/tree/master/lnk_data
 
 Cached Mie / temperature grid CSV files (`df_Tg_*.csv`) are generated automatically on first run and reused thereafter. They are excluded from version control.
+
+### Data references
+
+- **Stellar photosphere:** BT-NextGen model atmospheres using the AGSS2009 solar
+  abundances (Allard, Homeier & Freytag 2012; Asplund et al. 2009). Models were
+  obtained from the [SVO Theoretical Spectra web service][svo]
+  (http://svo2.cab.inta-csic.es/theory/newov2/index.php).
+- **Grain optical constants:** the `.lnk` (n, k) files, including
+  `silicate_d03.lnk` (astronomical silicate; Draine 2003), are distributed with
+  the [optool package][optool]
+  (https://github.com/cdominik/optool/tree/master/lnk_data); see the references
+  therein for the original laboratory/theoretical sources of each material.
 
 ## Running
 
