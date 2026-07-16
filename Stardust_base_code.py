@@ -18,6 +18,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.ticker import FuncFormatter
+from matplotlib.colors import LogNorm
 import math
 import time
 from astropy.modeling.models import BlackBody as BBody
@@ -164,7 +165,6 @@ kv = fk(wr) #k optical constant as a function of the wavelength space
 [Tg_sr,Qpr_s,Qabs_sw,Qsca_sw,sblowA,beta] = radpressure(Ls,Ms,Rs,Ts,rho,composition,
                                                          rbins_bm,fn,fk,fun_spek)
 
-
 #-----------------------------------------------------------------#
 #Create Blackbody Profiles for temperature range
 gtr = np.geomspace(2.5,1500,500)
@@ -277,3 +277,77 @@ ax.set_ylabel('Flux Density [mJy]')
 
 ax.legend(loc = 'lower left')
 plt.savefig('SED_Star+disc_thermal.pdf')
+
+
+#-----------------------------------------------------------------#
+##Heat maps: grain probability distribution & optical depth##
+#-----------------------------------------------------------------#
+#Helper: build cell edges for pcolormesh from bin centres
+def _edges_log(centres):
+    centres = np.asarray(centres, dtype=float)
+    logc = np.log10(centres)
+    mid = (logc[:-1] + logc[1:]) / 2
+    first = logc[0] - (mid[0] - logc[0])
+    last = logc[-1] + (logc[-1] - mid[-1])
+    return 10**np.concatenate(([first], mid, [last]))
+
+def _edges_lin(centres):
+    centres = np.asarray(centres, dtype=float)
+    mid = (centres[:-1] + centres[1:]) / 2
+    first = centres[0] - (mid[0] - centres[0])
+    last = centres[-1] + (centres[-1] - mid[-1])
+    return np.concatenate(([first], mid, [last]))
+
+s_edges = _edges_log(s_gs)          #grain-size cell edges [micron]
+r_edges = _edges_lin(rbins_bm)      #radial cell edges [au]
+
+#Collapse the time axis of the 3D orbital cube -> (radius, grain size)
+prob_map = np.sum(prob_densities_time, axis=2)   #shape (n_r, n_s)
+
+#-- Figure: grain probability distribution heat map --
+plt.clf()
+fig, ax = plt.subplots(figsize=(7, 5))
+prob_pos = prob_map[prob_map > 0]
+if prob_pos.size > 0:
+    pnorm = LogNorm(vmin=prob_pos.min(), vmax=prob_map.max())
+else:
+    pnorm = None
+cmap = plt.cm.inferno.copy()
+cmap.set_bad(cmap(0.0))     #empty/zero cells shown at the lowest colour
+prob_masked = np.ma.masked_where(prob_map <= 0, prob_map)
+#grain size as a function of radial distance -> radius on x, grain size on y
+pc = ax.pcolormesh(r_edges, s_edges, prob_masked.T, cmap=cmap, norm=pnorm, shading='auto', edgecolors='none', linewidth=0, rasterized=True)
+ax.set_yscale('log')
+ax.set_xlabel('Stellar distance [au]', fontsize=13)
+ax.set_ylabel('Grain size [$\\mu$m]', fontsize=13)
+ax.set_title('Grain probability distribution', fontsize=12)
+cb = fig.colorbar(pc, ax=ax)
+cb.set_label('Relative probability density')
+fig.tight_layout()
+plt.savefig('HeatMap_Probability_'+composition+'.pdf')
+
+#-- Figure: optical depth heat map --
+plt.clf()
+fig, ax = plt.subplots(figsize=(7, 5))
+OD_pos = OD_sr[OD_sr > 0]
+if OD_pos.size > 0:
+    onorm = LogNorm(vmin=OD_pos.min(), vmax=OD_sr.max())
+else:
+    onorm = None
+cmap2 = plt.cm.viridis.copy()
+cmap2.set_bad(cmap2(0.0))    #empty/zero cells shown at the lowest colour
+OD_masked = np.ma.masked_where(OD_sr <= 0, OD_sr)
+#grain size as a function of radial distance -> radius on x, grain size on y
+pc = ax.pcolormesh(r_edges, s_edges, OD_masked.T, cmap=cmap2, norm=onorm, shading='auto', edgecolors='none', linewidth=0, rasterized=True)
+ax.set_yscale('log')
+ax.set_xlabel('Stellar distance [au]', fontsize=13)
+ax.set_ylabel('Grain size [$\\mu$m]', fontsize=13)
+ax.set_title('Optical depth', fontsize=12)
+cb = fig.colorbar(pc, ax=ax)
+cb.set_label(r'Optical depth $\tau(s, r)$')
+fig.tight_layout()
+plt.savefig('HeatMap_OpticalDepth_'+composition+'.pdf')
+
+print('Saved: SED_Star+disc_thermal.pdf')
+print('Saved: HeatMap_Probability_'+composition+'.pdf')
+print('Saved: HeatMap_OpticalDepth_'+composition+'.pdf')
